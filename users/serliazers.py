@@ -4,10 +4,12 @@ from users.models import User, Payments
 
 
 class UserSerializer(serializers.ModelSerializer):
-    model = User
-    fields = '__all__'
+    class Meta:
+        model = User
+        fields = '__all__'
 
 
 class PaymentSerializer(serializers.ModelSerializer):
-    model = Payments
-    fields = '__all__'
+    class Meta:
+        model = Payments
+        fields = '__all__'
