@@ -1,18 +1,26 @@
 from django.db.models import Q
 from django.http import JsonResponse
-from rest_framework import generics, viewsets, status
+from rest_framework import generics, viewsets, status, permissions
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from materials.models import Course, Lesson
+from materials.models import Course, Lesson, Subscription
+from materials.paginators import CourseAndLessonPagination
 from materials.permissons import IsModerator, IsOwner
-from materials.serliazers import CourseSerializer, LessonSerializer
+from materials.serliazers import (
+    CourseSerializer,
+    LessonSerializer,
+    SubscriptionSerializer,
+)
 
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
     queryset = Course.objects.all()
+    pagination_class = CourseAndLessonPagination
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
@@ -65,6 +73,7 @@ class CourseCreateAPIView(generics.CreateAPIView):
 class CourseListAPIView(generics.ListAPIView):
     serializer_class = CourseSerializer
     queryset = Course.objects.all()
+    pagination_class = CourseAndLessonPagination
 
 
 class LessonCreateAPIView(generics.CreateAPIView):
@@ -87,6 +96,7 @@ class LessonCreateAPIView(generics.CreateAPIView):
 class LessonListAPIView(generics.ListAPIView):
     serializer_class = LessonSerializer
     queryset = Lesson.objects.all()
+    pagination_class = CourseAndLessonPagination
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -97,7 +107,7 @@ class LessonListAPIView(generics.ListAPIView):
 
         :return: Запрос к базе данных для получения объектов Lesson.
         """
-        if self.request.user.groups.filter('moderator').exists():
+        if self.request.user.groups.filter(groups__name="moderator").exists():
             return Lesson.objects.all()
         return Lesson.objects.filter(owner=self.request.user)
 
@@ -111,22 +121,69 @@ class LessonListAPIView(generics.ListAPIView):
         """
         queryset = Lesson.objects.all()
         serializer = LessonSerializer(queryset, many=True)
-        return Response({'lessons': serializer.data})
+        return Response({"lesson": serializer.data})
+
+
+class LessonViewSet(viewsets.ModelViewSet):
+    serializer_class = LessonSerializer
+    queryset = Lesson.objects.all()
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
 class LessonRetrieveAPIView(generics.RetrieveAPIView):
     serializer_class = LessonSerializer
     queryset = Lesson.objects.all()
-    permission_classes = [IsModerator, IsModerator | IsOwner]
+    permission_classes = [IsAuthenticated, (IsModerator | IsOwner)]
 
 
 class LessonUpdateAPIView(generics.UpdateAPIView):
     serializer_class = LessonSerializer
     queryset = Lesson.objects.all()
-    permission_classes = [IsModerator, IsModerator | IsOwner]
+    permission_classes = [IsAuthenticated, IsModerator | IsOwner]
 
 
 class LessonDestroyAPIView(generics.DestroyAPIView):
     serializer_class = LessonSerializer
     queryset = Lesson.objects.all()
-    permission_classes = [IsModerator, IsOwner]
+    permission_classes = [IsAuthenticated, IsOwner]
+
+
+class SubscriptionAPIView(APIView):
+    serializer_class = SubscriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """
+        Создает подписку на курс или удаляет существующую подписку пользователя.
+
+        Parameters:
+        - request: Запрос API, содержащий информацию о пользователе и курсе для подписки.
+        - args: Дополнительные аргументы, если таковые есть.
+        - kwargs: Дополнительные именованные аргументы, если таковые есть.
+
+        Returns:
+        - Response: Сообщение о статусе операции и соответствующий HTTP статус.
+
+        Raises:
+        - HTTP404: Если курс с указанным ID не найден.
+        """
+        user = self.request.user
+        course_id = self.request.data.get("course")
+        course_item = get_object_or_404(Course, pk=course_id)
+        sub_item, created = Subscription.objects.get_or_create(
+            user=user, course=course_item
+        )
+
+        if created:
+            message = "Подписка на курс успешно добавлена"
+            status_code = (
+                status.HTTP_201_CREATED
+            )  # Код 201 для успешного создания ресурса
+        else:
+            sub_item.delete()
+            message = "Подписка на курс успешно удалена"
+            status_code = (
+                status.HTTP_204_NO_CONTENT
+            )  # Код 204 для успешного удаления ресурса
+
+        return Response({"message": message}, status=status_code)
