@@ -1,10 +1,8 @@
-from unittest.mock import patch
-
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APITestCase
 
-from materials.models import Lesson, Course, Subscription
+from materials.models import Lesson, Course
 from users.models import User
 
 
@@ -26,29 +24,26 @@ class MaterialsTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Lesson.objects.all().count(), 2)
 
-    # def test_list_lesson(self):
-    #     url = reverse("materials:lesson-list")
-    #     response = self.client.get(url)
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(
-    #         response.json(),
-    #         {
-    #             "count": 1,
-    #             "next": None,
-    #             "previous": None,
-    #             "results": [
-    #                 {
-    #                     "id": 6,
-    #                     "title": "test_lesson",
-    #                     "description": None,
-    #                     "preview": None,
-    #                     "video_link": None,
-    #                     "course": None,
-    #                     "owner": 4,
-    #                 }
-    #             ],
-    #         },
-    #     )
+    def test_list_lesson(self):
+        url = reverse("materials:lesson-list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.json(),
+            {
+                'lesson': [
+                    {
+                        'id': 6,
+                        'title': 'test_lesson',
+                        'description': None,
+                        'preview': None,
+                        'video_link': None,
+                        'course': None,
+                        'owner': 4
+                    }
+                ]
+            }
+        )
 
     def test_delete_lesson(self):
         """Тестирование удаления урока"""
@@ -76,7 +71,9 @@ class MaterialsTestCase(APITestCase):
             video_link="youtube.com/watch/123456",
         )
 
-        response = self.client.get(reverse("materials:lesson-view", args=[les_detail.id]))
+        response = self.client.get(
+            reverse("materials:lesson-view", args=[les_detail.id])
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
@@ -96,10 +93,7 @@ class MaterialsTestCase(APITestCase):
 class SubscriptionTestCase(APITestCase):
     def setUp(self):
         self.user = User.objects.create(
-            email="user@example.com",
-            is_staff=True,
-            is_active=True,
-            is_superuser=False
+            email="user@example.com", is_staff=True, is_active=True, is_superuser=False
         )
         self.user.set_password("123qwe")
         self.user.save()
@@ -119,4 +113,6 @@ class SubscriptionTestCase(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        self.assertEqual(response.json(), {'message': 'Подписка на курс успешно добавлена'})
+        self.assertEqual(
+            response.json(), {"message": "Подписка на курс успешно добавлена"}
+        )
