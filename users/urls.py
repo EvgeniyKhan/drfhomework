@@ -6,9 +6,8 @@ from users.apps import UsersConfig
 from users.views import (
     UserViewSet,
     UserListAPIView,
-    PaymentsListAPIView,
     PaymentsCreateAPIView,
-    UserCreateAPIView,
+    UserCreateAPIView, PaymentsListAPIView,
 )
 
 router = DefaultRouter()

@@ -33,3 +33,6 @@ six==1.16.0
 sqlparse==0.5.0
 uritemplate==4.1.1
 urllib3==2.1.0
+drf-yasg==1.21.7
+currency.converter==0.5.5
+stripe~=9.6.0

@@ -32,24 +32,15 @@ class Payments(models.Model):
 
     PAYMENT_METHOD_CHOICES = ((CASH, "Наличные"), (CARD, "Банковский перевод"))
 
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, verbose_name="Пользователь", **NULLABLE
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь", **NULLABLE)
     date_payment = models.DateField(auto_now=True, verbose_name="Дата оплаты")
-    paid_course = models.ForeignKey(
-        Course, on_delete=models.CASCADE, verbose_name="Оплаченный курс", **NULLABLE
-    )
-    paid_lesson = models.ForeignKey(
-        Lesson, on_delete=models.CASCADE, verbose_name="Оплаченный урок", **NULLABLE
-    )
+    paid_course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name="Оплаченный курс", **NULLABLE)
+    paid_lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, verbose_name="Оплаченный урок", **NULLABLE)
     payment_amount = models.PositiveIntegerField(verbose_name="Сумма оплаты")
-    payment_method = models.CharField(
-        max_length=50,
-        choices=PAYMENT_METHOD_CHOICES,
-        default=CARD,
-        verbose_name="Способ оплаты",
-    )
-
+    payment_method = models.CharField(max_length=50, choices=PAYMENT_METHOD_CHOICES, default=CARD,
+                                      verbose_name="Способ оплаты")
+    session_id = models.CharField(max_length=250, verbose_name="Айди сессии", **NULLABLE)
+    link = models.URLField(max_length=500, verbose_name="Ссылка на сессию", **NULLABLE)
     def __str__(self):
         return f"{self.user} - {self.paid_course if self.paid_course else self.paid_lesson}"
 
