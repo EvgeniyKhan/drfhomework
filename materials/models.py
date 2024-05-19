@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from congig.settings import AUTH_USER_MODEL
+from config.settings import AUTH_USER_MODEL
 
 NULLABLE = {"blank": True, "null": True}
 

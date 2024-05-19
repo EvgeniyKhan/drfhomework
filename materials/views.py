@@ -1,9 +1,6 @@
-from django.db.models import Q
-from django.http import JsonResponse
 from rest_framework import generics, viewsets, status, permissions
-from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
