@@ -1,23 +1,25 @@
-# Используем официальный образ Python 3.12
-FROM python:3.12
+# Используем базовый образ с Python
+FROM python:3.12-slim
 
-# Устанавливаем рабочую директорию внутри контейнера
+# Установка необходимых пакетов
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем файл зависимостей в контейнер
-COPY requirements.txt /app/
+# Копируем файл требований
+COPY requirements.txt .
 
 # Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем весь проект в контейнер
-COPY . /app/
+COPY . .
 
-# Применяем миграции базы данных
-RUN python manage.py migrate
-
-# Открываем порт, который будет использоваться контейнером
+# Открываем порт
 EXPOSE 8080
 
-# Команда для запуска сервера разработки Django
-CMD ["python", "manage.py", "runserver", "127.0.0.1:8080"]
+# Выполняем команду запуска
+CMD ["sh", "-c", "until pg_isready -h db -p 5432; do echo 'Waiting for postgres...'; sleep 1; done; python3 manage.py migrate && python3 manage.py runserver 0.0.0.0:8080"]
